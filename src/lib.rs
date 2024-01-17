@@ -1,7 +1,7 @@
-#![forbid(unsafe_code)]
+use std::fmt::Debug;
 
 /// A fragment of a computed diff.
-#[derive(Clone, Debug, PartialEq, Eq)]
+#[derive(PartialEq, Eq)]
 pub enum Result<T> {
     /// An element that only exists in the left input.
     Left(T),
@@ -9,6 +9,28 @@ pub enum Result<T> {
     Both(T, T),
     /// An element that only exists in the right input.
     Right(T),
+}
+
+impl<T: Clone + Copy> Copy for Result<T> {}
+
+impl<T: Clone> Clone for Result<T> {
+    fn clone(&self) -> Self {
+        match self {
+            Result::Left(l) => Result::Left(l.clone()),
+            Result::Right(r) => Result::Right(r.clone()),
+            Result::Both(l, r) => Result::Both(l.clone(), r.clone()),
+        }
+    }
+}
+
+impl<T: Debug> Debug for Result<T> {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        match self {
+            Result::Left(l) => f.debug_tuple("Left").field(l).finish(),
+            Result::Right(r) => f.debug_tuple("Right").field(r).finish(),
+            Result::Both(l, r) => f.debug_tuple("Both").field(l).field(r).finish(),
+        }
+    }
 }
 
 /// Computes the diff between two slices.
